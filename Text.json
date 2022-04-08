@@ -1,0 +1,16 @@
+﻿{
+  "name": "Racks",
+  "address": {
+    "streetAddress": "Udhna",
+    "city": 55,
+    "state": "CA"
+  },
+  "boolean": true,
+  "age": 24,
+  "phoneNumbers": [
+    {
+      "type": "home",
+      "number": 4509294859
+    }
+  ]
+}

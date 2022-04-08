@@ -1,0 +1,325 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
+using System.Threading.Channels;
+using Generics;
+
+namespace CodeGenerator;
+
+public class JsonManipulator
+{
+    private string jsonText;
+    private MyList<string> keys = new MyList<string>();
+    private MyList<string> keysV2 = new MyList<string>();
+    private JsonObject currentObject;
+    private JsonArray currentArray;
+    private MyList<int> testkeys = new MyList<int>();
+    private MyList<int> INTI = new MyList<int>();
+    private string filepath;
+
+    public void ReadJson(String jsonPath)
+    {
+        PrintDocument();
+        jsonText = File.ReadAllText(jsonPath);
+        var temp = JsonDocument.Parse(jsonText);
+        var temper = temp.RootElement;
+        StoreKeys(CleanJsonStrings(SplitJsonStrings(jsonText)), temper);
+        bool done = false;
+        for (int j = 0; j < testkeys.Capacity; j++)
+        {
+            if (temper.TryGetProperty(keys.Get(testkeys.Get(j)), out JsonElement value))
+            {
+                var valueKind = temper.GetProperty(keys.Get(index: testkeys.Get(j))).ValueKind;
+                if (valueKind == JsonValueKind.Array)
+                {
+                    for (int i = 0; i < INTI.Capacity; i++)
+                    {
+                        var aarrayList =  temper.GetProperty(keys.Get(INTI.Get(i))).ToString();
+                        aarrayList = aarrayList.Trim();
+                        aarrayList = aarrayList.TrimEnd(']');
+                        aarrayList = aarrayList.TrimStart('[');
+                        var tempy = JsonDocument.Parse(aarrayList).RootElement;
+                        StoreKeysV2(CleanJsonStrings(SplitJsonStrings(aarrayList)), tempy);
+                    }
+                }
+                if (done == false && valueKind != JsonValueKind.String && valueKind == JsonValueKind.Object)
+                {
+                    StoreKeys(CleanJsonStrings(SplitJsonStrings(jsonText)), temper.GetProperty(keys.Get(testkeys.Get(j))));
+                    done = true;
+                }
+            }
+        }
+    }
+    
+    private string[] SplitJsonStrings(string rawJson)
+    {
+        return Regex.Split(rawJson, @"(?<=[:,])");
+    }
+
+    private string[] CleanJsonStrings(string[] jsonVal)
+    {
+        var charsToRemove = new[] {"\"", ",", ":", "[", "]", "{", "}"};
+        int i = 0;
+        foreach (var word in jsonVal)
+        {
+            word.Split(',', ':');
+            foreach (var c in charsToRemove)
+            {
+                jsonVal[i] = jsonVal[i].Replace(c, string.Empty);
+            }
+            i++;
+        }
+        return jsonVal;
+    }
+
+    private void StoreKeys(string[] values, JsonElement tester)
+    {
+        Console.WriteLine("public partial class Welcome");
+        Console.WriteLine("{");
+        int i = 0;
+        foreach (var key in values)
+        {
+            keys.Add(key.Trim());
+            ArraysObjectWriteOff(keys, i, tester);
+            i++;
+        }
+        Console.WriteLine("}\n");
+    }
+    
+    private void StoreKeysV2(string[] values, JsonElement tester)
+    {
+        
+        Console.WriteLine("public partial class Welcome");
+        Console.WriteLine("{");
+        int i = 0;
+        foreach (var key in values)
+        {
+            keysV2.Add(key.Trim());
+            ArraysObjectWriteOff(keysV2, i, tester);
+            i++;
+        }
+        Console.WriteLine("}\n");
+    }
+
+    private void ArraysObjectWriteOff(MyList<string> testList, int i, JsonElement tester)
+    {
+        if (tester.TryGetProperty(testList.Get(i), out JsonElement value))
+        {
+            var tempo = tester.GetProperty(testList.Get(i)).ValueKind;
+            if (tempo == JsonValueKind.Object)
+            {
+                testkeys.Add(i);
+                Console.Write("\t public ");
+                Console.Write(CapitalizeFirstLetter(testList.Get(i)) + " ");
+                Console.Write(testList.Get(i));
+                Console.WriteLine(" { get; set; }");
+            }
+            else if (tempo == JsonValueKind.Array)
+            {
+                testkeys.Add(i);
+                INTI.Add(i);
+                Console.Write("\t public List<");
+                Console.Write(CapitalizeFirstLetter(testList.Get(i)) + "> ");
+                Console.Write(testList.Get(i));
+                Console.WriteLine(" { get; set; }");
+                
+            }
+            else if (tempo == JsonValueKind.String)
+            {
+                printClasses("string", testList, i);
+            }
+            else if (tempo == JsonValueKind.Number)
+            {
+                printClasses("long", testList, i);
+            }
+            else if (tempo == JsonValueKind.False || tempo == JsonValueKind.True)
+            {
+                printClasses("bool", testList, i);
+            }
+        }
+    }
+
+    private void printClasses(string valueType, MyList<String> vales, int i)
+    {
+        testkeys.Add(i);
+        Console.Write("\t public "+ valueType + " ");
+        Console.Write(CapitalizeFirstLetter(vales.Get(i)));
+        Console.WriteLine(" { get; set; }");
+    }
+
+    private string CapitalizeFirstLetter(string word)
+    {
+        if (word.Length == 0)
+            return "";
+        else if (word.Length == 1)
+            return char.ToUpper(word[0]).ToString();
+        else
+            return char.ToUpper(word[0]) + word.Substring(1);
+    }
+
+    private void PrintDocument()
+    {
+        filepath = @"C:\Users\willi\Desktop\Desktop.txt";
+        if (!File.Exists(filepath))
+        {
+            using (StreamWriter sw = File.CreateText(filepath))
+            {
+                sw.WriteLine("using System.Text.Json;\n\nnamespace DeserializeExtra\n{\n\tpublic class ");
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+private void StoreStrings(JsonValueKind valueKind, string value)
+    {
+        Console.WriteLine(lastString);
+        if (valueKind == JsonValueKind.Array)
+        {
+            if (tester)
+            {
+                lastString = "\tpublic class " + CapitalizeFirstLetter(value) + "\n\t{\n";
+            }
+            else
+            {
+                Console.WriteLine("fail");   
+            }
+            //Console.WriteLine("\tpublic class " + CapitalizeFirstLetter(value) + "\n{\n\t\tpublic ");
+        }
+        else if (valueKind == JsonValueKind.Object)
+        {
+            if (tester)
+            {
+                lastString = "\tpublic class " + CapitalizeFirstLetter(value) + "\n\t{\n";
+            }
+            else
+            {
+                Console.WriteLine("fail");   
+            }
+            //Console.WriteLine("\tpublic class " + CapitalizeFirstLetter(value) + "\n{\n");
+        }
+        else if (valueKind == JsonValueKind.Number)
+        {
+            if (tester)
+            {
+                lastString += "\t\tpublic " + "long " + value + "{ get; set; }\n";
+            }
+            else
+            {
+                Console.WriteLine("fail");   
+            }
+            //Console.WriteLine("\tpublic " + "long" + value + "{ get; set; }");
+        }
+        else if (valueKind == JsonValueKind.String)
+        {
+            if (tester)
+            {
+                lastString += "\t\tpublic " + "string "  + value + "{ get; set; }\n";
+            }
+            else
+            {
+                Console.WriteLine("fail");   
+            }
+            //Console.WriteLine("\tpublic " + valueKind.ToString().ToLower() + " " + value + "{ get; set; }");
+        }
+        else if (valueKind == JsonValueKind.False || valueKind == JsonValueKind.True)
+        {
+            if (tester)
+            {
+                lastString += "\t\tpublic " + "bool "  + value + "{ get; set; }\n";
+            }
+            else
+            {
+                Console.WriteLine("fail");   
+            }
+            //Console.WriteLine("\tpublic " + valueKind.ToString().ToLower() + " " + value + "{ get; set; }");
+        }
